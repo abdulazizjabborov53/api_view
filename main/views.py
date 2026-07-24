@@ -1,6 +1,3 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView, CreateAPIView, ListAPIView
-from .models import Article, ArticleComment
-from .serializers import ArticleSerializer, ArticleCommentSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
@@ -9,6 +6,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from .models import HeroSection
+from .serializers import HeroSectionSerializer
 
 
 class Register(APIView):
@@ -26,6 +25,7 @@ class Register(APIView):
             'token': token.key,
         }
         return Response(data, status=status.HTTP_201_CREATED)
+
 class Login(APIView):
     def post(self, request):
         username = request.data.get('username')
@@ -89,7 +89,7 @@ class JWTLogin(APIView):
 
 class JWTLogout(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         try:
             refresh_token = request.data.get('refresh')
@@ -100,57 +100,8 @@ class JWTLogout(APIView):
             return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class ArticleListG(ListCreateAPIView):
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-
-
-class ArticleDetailG(RetrieveUpdateDestroyAPIView):
-    queryset = Article.objects.all()
-    serializer_class = ArticleSerializer
-    lookup_field = 'id'
-
-
-class ArticleCommentG(CreateAPIView):
-    queryset = ArticleComment.objects.all()
-    serializer_class = ArticleCommentSerializer
-
-
-class CommentListG(ListAPIView):
-    queryset = ArticleComment.objects.all()
-    serializer_class = ArticleCommentSerializer
-
-    def get_queryset(self):
-        article_id = self.kwargs.get('article_id')
-        return ArticleComment.objects.filter(article_id=article_id)
+class HomeView(APIView):
+    def get(self, request, lang=None):
+        hero = HeroSection.objects.last()
+        hero_sr = HeroSectionSerializer(hero, context={'request': request, 'lang': lang})
+        return Response(hero_sr.data)

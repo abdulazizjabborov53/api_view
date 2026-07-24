@@ -1,68 +1,41 @@
 from django.db import models
-
-class Banner(models.Model):
-    title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='banners/')
-    description = models.TextField()
-    link = models.URLField(blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return self.title
-class Product(models.Model):
-    name = models.CharField(max_length=255)
-    category = models.ForeignKey('Category', on_delete=models.CASCADE, null=True, blank=True)
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-class Category(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-class About(models.Model):
-    title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='about/')
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return self.title
-
-class Service(models.Model):
-    title = models.CharField(max_length=255)
-    icon = models.CharField(max_length=100, help_text="Icon class or name")
-    description = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    def __str__(self):
-        return self.title
+from deep_translator import GoogleTranslator
 
 
-class Contact(models.Model):
-    name = models.CharField(max_length=255)
-    email = models.EmailField()
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+class HeroSection(models.Model):
+    image = models.ImageField(upload_to='hero_section', null=True, blank=True)
+    sub_title_uz = models.CharField(max_length=255)
+    sub_title_ru = models.CharField(max_length=255, null=True, blank=True)
+    sub_title_en = models.CharField(max_length=255, null=True, blank=True)
+
+    title_uz = models.CharField(max_length=255)
+    title_ru = models.CharField(max_length=255, null=True, blank=True)
+    title_en = models.CharField(max_length=255, null=True, blank=True)
+
+    description_uz = models.TextField()
+    description_ru = models.TextField(null=True, blank=True)
+    description_en = models.TextField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        fields_to_translate = ["sub_title", "title", "description"]
+
+        for field in fields_to_translate:
+            uz_val = getattr(self, f"{field}_uz")
+            if uz_val:
+                # Ru tarjimasi
+                if not getattr(self, f"{field}_ru"):
+                    translated_ru = GoogleTranslator(
+                        source="uz", target="ru"
+                    ).translate(uz_val)
+                    setattr(self, f"{field}_ru", translated_ru)
+
+                # EN tarjimasi
+                if not getattr(self, f"{field}_en"):
+                    translated_en = GoogleTranslator(
+                        source="uz", target="en"
+                    ).translate(uz_val)
+                    setattr(self, f"{field}_en", translated_en)
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.name
-
-
-class Article(models.Model):
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-    photo = models.ImageField(upload_to='articles/')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def comments(self):
-        return ArticleComment.objects.filter(article=self)
-
-    def __str__(self):
-        return self.title
-
-
-class ArticleComment(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, )
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+        return self.title_uz
