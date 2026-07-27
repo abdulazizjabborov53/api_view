@@ -13,4 +13,8 @@ urlpatterns = [
     path('jwt/logout/', views.JWTLogout.as_view(), name='jwt_logout'),
     path('jwt/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('jwt/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('courses/', views.CourseView.as_view(), name='courses'),
+    path('course/', views.Course.as_view(), name='course'),
+    path('category/', views.CategoryView.as_view(), name='category'),
+
 ]

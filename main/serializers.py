@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import HeroSection
+from .models import HeroSection, Category, Course
 
 
 class HeroSectionSerializer(serializers.ModelSerializer):
@@ -34,3 +34,15 @@ class HeroSectionSerializer(serializers.ModelSerializer):
         elif lang == 'en':
             return obj.description_en or obj.description_uz
         return obj.description_uz
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ['id', 'name', 'category', 'price']

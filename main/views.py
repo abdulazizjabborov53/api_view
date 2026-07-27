@@ -1,3 +1,5 @@
+from unicodedata import category
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
@@ -6,8 +8,14 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import HeroSection
-from .serializers import HeroSectionSerializer
+from .models import HeroSection, Category, Course
+from .serializers import HeroSectionSerializer, CategorySerializer, CourseSerializer
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from . import models, serializers
+from .filters import CourseFilter
 
 
 class Register(APIView):
@@ -105,3 +113,34 @@ class HomeView(APIView):
         hero = HeroSection.objects.last()
         hero_sr = HeroSectionSerializer(hero, context={'request': request, 'lang': lang})
         return Response(hero_sr.data)
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class CategoryView(generics.ListAPIView):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+
+class Course(APIView):
+    def get(self,request):
+        course = models.Course.objects.all()
+        category=request.query_params.get('category')
+        if category:
+            course = course.filter(category_id=category)
+
+
+        course_sr = serializers.CourseSerializer(course, many=True)
+        data = {
+            'courses': course_sr.data
+        }
+        return Response(data)
+
+class CourseView(generics.ListAPIView):
+    queryset = models.Course.objects.all()
+    serializer_class = CourseSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = CourseFilter
+    search_fields = ['name']
+    ordering_fields = ['price', 'name']
+    pagination_class = CustomPagination
